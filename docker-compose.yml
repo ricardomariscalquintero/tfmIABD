@@ -1,0 +1,86 @@
+version: "3"
+
+services:
+  namenode:
+    build: ./hadoop
+    container_name: namenode
+    hostname: namenode
+    environment:
+      - HDFS_NAMENODE_USER=root
+    ports:
+      - "9870:9870"   # HDFS Web UI
+    networks:
+      - hadoop-net
+    volumes:
+      - namenode_data:/tmp/hadoop
+    command: >
+      bash -c "
+        hdfs namenode -format -force &&
+        hdfs namenode
+      "
+
+  resourcemanager:
+    build: ./hadoop
+    container_name: resourcemanager
+    hostname: resourcemanager
+    environment:
+      - YARN_RESOURCEMANAGER_USER=root
+    ports:
+      - "8088:8088"   # YARN Web UI
+    networks:
+      - hadoop-net
+    command: >
+      bash -c "
+        yarn resourcemanager
+      "
+
+  datanode1:
+    build: ./hadoop
+    container_name: datanode1
+    hostname: datanode1
+    environment:
+      - HDFS_DATANODE_USER=root
+      - YARN_NODEMANAGER_USER=root
+    networks:
+      - hadoop-net
+    volumes:
+      - datanode1_data:/tmp/hadoop
+    depends_on:
+      - namenode
+      - resourcemanager
+    command: >
+      bash -c "
+        hdfs datanode &
+        yarn nodemanager &
+        tail -f /dev/null
+      "
+
+  datanode2:
+    build: ./hadoop
+    container_name: datanode2
+    hostname: datanode2
+    environment:
+      - HDFS_DATANODE_USER=root
+      - YARN_NODEMANAGER_USER=root
+    networks:
+      - hadoop-net
+    volumes:
+      - datanode2_data:/tmp/hadoop
+    depends_on:
+      - namenode
+      - resourcemanager
+    command: >
+      bash -c "
+        hdfs datanode &
+        yarn nodemanager &
+        tail -f /dev/null
+      "
+
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+
+networks:
+  hadoop-net:
+

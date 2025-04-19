@@ -1,0 +1,31 @@
+<configuration>
+    <property> 
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:9000</value>
+    </property>
+	<property> 
+        <name>hadoop.http.staticuser.user</name>
+        <value>root</value>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/tmp/hadoop</value>
+    </property>
+    <!-- 128 KB es un buen valor para clústeres de prueba, 
+         pero se puede aumentar a 256 KB para producción con archivos grandes.  -->
+    <property>
+        <name>io.file.buffer.size</name>
+        <value>131072</value>
+    </property>
+    <!-- simple solo para pruebas; usar kerberos en producción. -->
+    <property>
+        <name>hadoop.security.authentication</name>
+        <value>simple</value>
+    </property>
+    <!-- Desactivado en entornos de prueba (false); activado para producción (true). -->
+    <property>
+	<name>dfs.permissions</name>
+        <value>false</value>
+    </property>
+</configuration>
+

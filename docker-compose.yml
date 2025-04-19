@@ -130,6 +130,27 @@ services:
         tail -f /dev/null
       "
 
+  spark-client:
+    build: ./spark                    
+    container_name: spark-client
+    hostname: spark-client
+    networks:
+      - hadoop-net
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - resourcemanager
+      - hive-server
+    volumes:
+      - /tmp/shared:/shared        
+    environment:
+      - SPARK_HOME=/opt/spark
+      - HADOOP_HOME=/opt/hadoop
+      - HIVE_HOME=/opt/hive
+      - PATH=/opt/spark/bin:/opt/hadoop/bin:/opt/hive/bin:$PATH
+    tty: true
+
 volumes:
   namenode_data:
   datanode1_data:

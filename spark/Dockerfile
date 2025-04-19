@@ -61,7 +61,31 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize
     tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz && \
     rm dockerize-linux-amd64-v0.6.1.tar.gz
 
-# Establecer Hive como comando de entrada (o bash para test)
-CMD ["/bin/bash"]
+### --- Spark ---
 
+ENV SPARK_VERSION=3.5.5
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+
+# Instalar Python y librerías útiles para PySpark
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    pip3 install pandas pyarrow findspark
+
+# Descargar Spark
+RUN wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar -xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 $SPARK_HOME && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
+# Opcional: exportar variables para shells interactivos
+RUN echo "export SPARK_HOME=${SPARK_HOME}" >> /root/.bashrc && \
+    echo "export PATH=${PATH}" >> /root/.bashrc
+
+# Revisamos los permisos para el eventLog
+RUN mkdir -p /tmp/spark-events && chmod 1777 /tmp/spark-events
+
+# (Opcional) Añadir configuración si la tienes preparada
+COPY config-spark/* $SPARK_HOME/conf/
+
+CMD ["/bin/bash"]
 

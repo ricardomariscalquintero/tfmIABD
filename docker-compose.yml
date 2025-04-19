@@ -136,6 +136,8 @@ services:
     hostname: spark-client
     networks:
       - hadoop-net
+    ports:
+      - "8888:8888"
     depends_on:
       - namenode
       - datanode1
@@ -149,6 +151,7 @@ services:
       - HADOOP_HOME=/opt/hadoop
       - HIVE_HOME=/opt/hive
       - PATH=/opt/spark/bin:/opt/hadoop/bin:/opt/hive/bin:$PATH
+      - SPARK_LOG_LEVEL=ERROR
     tty: true
 
 volumes:

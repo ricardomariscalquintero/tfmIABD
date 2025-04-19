@@ -68,8 +68,7 @@ ENV SPARK_HOME=/opt/spark
 ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 
 # Instalar Python y librerías útiles para PySpark
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    pip3 install pandas pyarrow findspark
+RUN apt-get update && apt-get install -y python3 python3-pip
 
 # Descargar Spark
 RUN wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
@@ -86,6 +85,22 @@ RUN mkdir -p /tmp/spark-events && chmod 1777 /tmp/spark-events
 
 # (Opcional) Añadir configuración si la tienes preparada
 COPY config-spark/* $SPARK_HOME/conf/
+
+### --- Python y Jupyter ---
+RUN pip3 install --no-cache-dir \
+    pandas \
+    pyarrow \
+    findspark \
+    jupyterlab \
+    notebook \
+    matplotlib \
+    seaborn \
+    pyspark
+
+# Directorio de notebooks
+RUN mkdir -p /opt/notebooks
+
+EXPOSE 8888
 
 CMD ["/bin/bash"]
 

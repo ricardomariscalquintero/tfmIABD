@@ -13,6 +13,7 @@ services:
       - hadoop-net
     volumes:
       - namenode_data:/tmp/hadoop
+      - /tmp/shared:/shared
     command: >
       bash -c "
         hdfs namenode -format -force &&
@@ -29,6 +30,8 @@ services:
       - "8088:8088"   # YARN Web UI
     networks:
       - hadoop-net
+    volumes:
+      - /tmp/shared:/shared
     command: >
       bash -c "
         yarn resourcemanager
@@ -45,6 +48,7 @@ services:
       - hadoop-net
     volumes:
       - datanode1_data:/tmp/hadoop
+      - /tmp/shared:/shared
     depends_on:
       - namenode
       - resourcemanager
@@ -66,6 +70,7 @@ services:
       - hadoop-net
     volumes:
       - datanode2_data:/tmp/hadoop
+      - /tmp/shared:/shared
     depends_on:
       - namenode
       - resourcemanager
@@ -76,10 +81,61 @@ services:
         tail -f /dev/null
       "
 
+  metastore-db:
+    image: mysql:5.7
+    container_name: metastore-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: metastore
+      MYSQL_USER: hive
+      MYSQL_PASSWORD: hive
+    volumes:
+      - metastore_data:/var/lib/mysql
+      - /tmp/shared:/shared
+    ports:
+      - "3306:3306"
+    networks:
+      - hadoop-net
+
+  hive-server:
+    build: ./hadoop-hive
+    container_name: hive-server
+    hostname: hive-server
+    environment:
+      HIVE_HOME: /opt/hive
+      HADOOP_HOME: /opt/hadoop
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+      HIVE_CONF_DIR: /opt/hive/conf
+      SERVICE_PRECONDITION: "namenode:9870 metastore-db:3306"
+    networks:
+      - hadoop-net
+    volumes:
+      - hive_data:/tmp/hive
+      - /tmp/shared:/shared
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - resourcemanager
+      - metastore-db
+    ports:
+      - "10000:10000"   # HiveServer2 (JDBC/Beeline)
+      - "9083:9083"     # Hive Metastore (para Thrift)
+    command: >
+      bash -c "
+        dockerize -wait tcp://metastore-db:3306 -timeout 60s &&
+        schematool -dbType mysql -initSchema --verbose || echo 'Metastore ya inicializado';
+        hive --service metastore &
+        hive --service hiveserver2 &
+        tail -f /dev/null
+      "
+
 volumes:
   namenode_data:
   datanode1_data:
   datanode2_data:
+  metastore_data:
+  hive_data:
 
 networks:
   hadoop-net:

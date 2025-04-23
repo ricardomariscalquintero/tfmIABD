@@ -82,7 +82,7 @@ services:
       "
 
   metastore-db:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: metastore-db
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -92,6 +92,7 @@ services:
     volumes:
       - metastore_data:/var/lib/mysql
       - /tmp/shared:/shared
+      - ./mysql/init-airflow.sql:/docker-entrypoint-initdb.d/init-airflow.sql
     ports:
       - "3306:3306"
     networks:
@@ -153,6 +154,28 @@ services:
       - PATH=/opt/spark/bin:/opt/hadoop/bin:/opt/hive/bin:$PATH
       - SPARK_LOG_LEVEL=ERROR
     tty: true
+
+  airflow:
+    build: ./airflow 
+    container_name: airflow
+    restart: always
+    depends_on:
+      - metastore-db
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+pymysql://airflow:airflow@metastore-db:3306/airflow
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=mysql+pymysql://airflow:airflow@metastore-db:3306/airflow
+      - AIRFLOW__CORE__FERNET_KEY=algo_generado
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/start-airflow.sh:/opt/airflow/start-airflow.sh
+    ports:
+      - "8080:8080"
+    entrypoint: /bin/bash  # << Esto evita que interprete `command:` como airflow
+    command: /opt/airflow/start-airflow.sh
+    networks:
+      - hadoop-net
 
 volumes:
   namenode_data:

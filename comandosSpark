@@ -1,0 +1,98 @@
+
+
+sudo docker-compose down -v
+
+sudo docker-compose build --no-cache
+
+sudo docker-compose up -d
+
+sudo docker exec -it spark-client bash
+
+
+
+pyspark \
+  --master local[*] \
+  --conf spark.sql.catalogImplementation=hive \
+  --conf spark.hadoop.hive.metastore.uris=thrift://hive-server:9083 \
+  --conf spark.sql.warehouse.dir=hdfs://namenode:9000/user/hive/warehouse
+
+
+spark.sql("SHOW DATABASES").show()
+
+
+spark.sql("CREATE DATABASE prueba")
+
+spark.sql("""
+    CREATE TABLE prueba.ventas (
+        id INT,
+        producto STRING,
+        cantidad INT
+    )
+    STORED AS PARQUET
+""")
+
+spark.sql("SELECT * FROM prueba.ventas").show()
+
+
+
+jupyter notebook --notebook-dir=/opt/notebooks \
+  --ip=0.0.0.0 \
+  --port=8888 \
+  --no-browser \
+  --NotebookApp.token='' \
+  --allow-root
+  
+Cuadernillo:
+
+# Celda 1: Importar e iniciar Spark
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("Prueba Spark") \
+    .master("local[*]") \
+    .getOrCreate()
+
+spark
+
+
+# 1. Ver bases de datos
+spark.sql("SHOW DATABASES").show()
+
+# 2. Crear una base de datos nueva
+spark.sql("CREATE DATABASE IF NOT EXISTS testdb")
+
+# 3. Usar esa base de datos
+spark.catalog.setCurrentDatabase("testdb")
+
+# 4. Crear una tabla sencilla
+spark.sql("""
+    CREATE TABLE IF NOT EXISTS empleados (
+        id INT,
+        nombre STRING,
+        salario FLOAT
+    ) STORED AS PARQUET
+""")
+
+# 5. Ver las tablas disponibles
+spark.sql("SHOW TABLES").show()
+
+# 6. Insertar datos (opcional si tienes `INSERT INTO`)
+spark.sql("""
+    INSERT INTO empleados VALUES
+    (1, 'Ana', 35000.0),
+    (2, 'Luis', 42000.5)
+""")
+
+# 7. Consultar los datos
+spark.sql("SELECT * FROM empleados").show()
+
+
+
+
+
+
+
+
+
+
+

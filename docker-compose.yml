@@ -197,6 +197,18 @@ services:
     networks:
       - hadoop-net
 
+  dremio:
+    image: dremio/dremio-oss:26.0.0
+    container_name: dremio
+    ports:
+      - "9047:9047"     # Web UI
+      - "31010:31010"   # JDBC/ODBC
+      - "45678:45678"   # backend
+    volumes:
+      - dremio_data:/opt/dremio/data
+    networks:
+      - hadoop-net
+
 volumes:
   namenode_data:
   datanode1_data:
@@ -204,6 +216,7 @@ volumes:
   metastore_data:
   hive_data:
   airflow_data:
+  dremio_data:
 
 networks:
   hadoop-net:

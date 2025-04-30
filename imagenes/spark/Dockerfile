@@ -35,7 +35,7 @@ RUN echo "export JAVA_HOME=${JAVA_HOME}" >> /root/.bashrc && \
     echo "export PATH=${PATH}" >> /root/.bashrc
 
 # Copiar configuraciones personalizadas
-COPY config-hadoop/* $HADOOP_HOME/etc/hadoop/
+COPY configuraciones/hadoop/* $HADOOP_HOME/etc/hadoop/
 
 ### --- Hive ---
 ENV HIVE_VERSION=3.1.3
@@ -53,8 +53,8 @@ RUN echo "export HIVE_HOME=${HIVE_HOME}" >> /root/.bashrc && \
     echo "export PATH=${PATH}" >> /root/.bashrc
 
 # Copiar configuración personalizada de Hive
-COPY config-hive/* $HIVE_HOME/conf/
-COPY lib-hive/* $HIVE_HOME/lib/
+COPY configuraciones/hive/* $HIVE_HOME/conf/
+COPY imagenes/hive/lib-hive/* $HIVE_HOME/lib/
 
 # Instalar dockerize para esperar a MySQL
 RUN wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz && \
@@ -84,7 +84,7 @@ RUN echo "export SPARK_HOME=${SPARK_HOME}" >> /root/.bashrc && \
 RUN mkdir -p /tmp/spark-events && chmod 1777 /tmp/spark-events
 
 # (Opcional) Añadir configuración si la tienes preparada
-COPY config-spark/* $SPARK_HOME/conf/
+COPY configuraciones/spark/* $SPARK_HOME/conf/
 
 ### --- Python y Jupyter ---
 RUN pip3 install --no-cache-dir \

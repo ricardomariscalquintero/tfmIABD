@@ -34,6 +34,6 @@ RUN echo "export JAVA_HOME=${JAVA_HOME}" >> /root/.bashrc && \
     echo "export PATH=${PATH}" >> /root/.bashrc
 
 # Copiar configuraciones personalizadas
-COPY config/* $HADOOP_HOME/etc/hadoop/
+COPY configuraciones/hadoop/* $HADOOP_HOME/etc/hadoop/
 
 CMD ["/bin/bash"]

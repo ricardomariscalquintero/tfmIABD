@@ -2,7 +2,9 @@ version: "3"
 
 services:
   namenode:
-    build: ./hadoop
+    build: 
+      context: .
+      dockerfile: imagenes/hadoop/Dockerfile
     container_name: namenode
     hostname: namenode
     environment:
@@ -16,12 +18,17 @@ services:
       - /tmp/shared:/shared
     command: >
       bash -c "
-        hdfs namenode -format -force &&
+        if [ ! -f /tmp/hadoop/.hdfs_formatted ]; then
+          hdfs namenode -format -force &&
+          touch /tmp/hadoop/.hdfs_formatted
+        fi
         hdfs namenode
       "
 
   resourcemanager:
-    build: ./hadoop
+    build: 
+      context: .
+      dockerfile: imagenes/hadoop/Dockerfile
     container_name: resourcemanager
     hostname: resourcemanager
     environment:
@@ -38,7 +45,9 @@ services:
       "
 
   datanode1:
-    build: ./hadoop
+    build: 
+      context: .
+      dockerfile: imagenes/hadoop/Dockerfile
     container_name: datanode1
     hostname: datanode1
     environment:
@@ -60,7 +69,9 @@ services:
       "
 
   datanode2:
-    build: ./hadoop
+    build: 
+      context: .
+      dockerfile: imagenes/hadoop/Dockerfile
     container_name: datanode2
     hostname: datanode2
     environment:
@@ -92,14 +103,16 @@ services:
     volumes:
       - metastore_data:/var/lib/mysql
       - /tmp/shared:/shared
-      - ./mysql/init-airflow.sql:/docker-entrypoint-initdb.d/init-airflow.sql
+      - ./imagenes/mysql/init-airflow.sql:/docker-entrypoint-initdb.d/init-airflow.sql
     ports:
       - "3306:3306"
     networks:
       - hadoop-net
 
   hive-server:
-    build: ./hadoop-hive
+    build: 
+      context: .
+      dockerfile: imagenes/hive/Dockerfile
     container_name: hive-server
     hostname: hive-server
     environment:
@@ -125,14 +138,19 @@ services:
     command: >
       bash -c "
         dockerize -wait tcp://metastore-db:3306 -timeout 60s &&
-        schematool -dbType mysql -initSchema --verbose || echo 'Metastore ya inicializado';
+        if [ ! -f /tmp/hive/.hive_initialized ]; then
+          schematool -dbType mysql -initSchema --verbose &&
+          touch /tmp/hive/.hive_initialized
+        fi
         hive --service metastore &
         hive --service hiveserver2 &
         tail -f /dev/null
       "
 
   spark-client:
-    build: ./spark                    
+    build: 
+      context: .
+      dockerfile: imagenes/spark/Dockerfile               
     container_name: spark-client
     hostname: spark-client
     networks:
@@ -156,7 +174,9 @@ services:
     tty: true
 
   airflow:
-    build: ./airflow 
+    build: 
+      context: .
+      dockerfile: imagenes/airflow/Dockerfile
     container_name: airflow
     restart: always
     depends_on:
@@ -168,8 +188,8 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=algo_generado
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/start-airflow.sh:/opt/airflow/start-airflow.sh
+      - ./imagenes/airflow/dags:/opt/airflow/dags
+      - ./imagenes/airflow/start-airflow.sh:/opt/airflow/start-airflow.sh
     ports:
       - "8080:8080"
     entrypoint: /bin/bash  # << Esto evita que interprete `command:` como airflow
@@ -183,6 +203,7 @@ volumes:
   datanode2_data:
   metastore_data:
   hive_data:
+  airflow_data:
 
 networks:
   hadoop-net:

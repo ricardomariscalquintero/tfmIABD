@@ -1,6 +1,6 @@
 
 
-sudo docker-compose down -v
+sudo docker-compose down
 
 sudo docker-compose build --no-cache
 
@@ -52,8 +52,9 @@ spark = SparkSession.builder \
     .master("local[*]") \
     .getOrCreate()
 
-spark
+spark.sparkContext.setLogLevel("ERROR")
 
+spark
 
 # 1. Ver bases de datos
 spark.sql("SHOW DATABASES").show()

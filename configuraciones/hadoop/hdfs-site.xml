@@ -5,11 +5,11 @@
   </property>
   <property>
     <name>dfs.namenode.name.dir</name>
-    <value>file:///tmp/hadoop/dfs/name</value>
+    <value>/tmp/hadoop/dfs/namenode</value>
   </property>
   <property>
     <name>dfs.datanode.data.dir</name>
-    <value>file:///tmp/hadoop/dfs/data</value>
+    <value>/tmp/hadoop/dfs/datanode</value>
   </property>
   <!-- 128 MB que es el tamaño por defecto  -->
   <property>

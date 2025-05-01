@@ -1,0 +1,180 @@
+
+Manual de instalación de infraestructura TFM.
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 1. Descargamos Lubuntu
+
+https://cdimage.ubuntu.com/lubuntu/releases/noble/release/lubuntu-24.04.2-desktop-amd64.iso
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 2. Creamos la máquina virtual
+
+Memoria RAM: 15000 MB
+Procesadores: 10
+Marcar la opción "Habilitar EFI"
+Disco duro: 100,00 GB
+No marcar "Reservar completamente"
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 3. Instalamos Lubuntu en la máquina virtual.
+
+Dejo seleccionada la opción "Instalación normal". No selecciono de esta ventana nada más de la ventana del modo de instalación.
+Marco la opción "Borrar el disco". No cambio nada más de la ventana de gestión del disco. 
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 4. Instalamos los complementos del invitado.
+
+1. Seleccionamos la opción, en la barra superior de la ventana, "Dispositivos > Insertar imagen de CD de los complementos del invitado".
+2. Escribimos en la terminal: sudo /media/ricardo/VBox_GAs_7.1.8/VBoxLinuxAdditions.run
+
+Consideraciones:
+    La ruta contiene ricardo porque es mi usuario. En otro caso sería distinto.
+	La carpeta de Vbox puede cambiar por la versión. Siempre se va a montar en /media/usuario
+
+3. Ya podemos seleccionar "portapapeles compartido > Bidireccional".
+4. Reiniciamos con: sudo reboot
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 5. Instalamos Docker. Recuerda tener el portapapeles compartido.
+
+
+1. Configuramos el repositorio de Docker.
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+
+2. Instalamos Docker.
+
+sudo apt-get install \
+  docker-ce=5:28.0.4-1~ubuntu.24.04~noble \
+  docker-ce-cli=5:28.0.4-1~ubuntu.24.04~noble \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin -y
+
+
+3. Bloqueamos la versión para que no se actualice automáticamente.
+
+sudo apt-mark hold docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+4. Instalamos el binario clásico de Docker-compose.
+
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \
+  -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+
+5. Comprobamos versiones.
+
+ricardo@ricardo-virtualbox:~$ docker --version
+Docker version 28.0.4, build b8034c0
+ricardo@ricardo-virtualbox:~$ docker-compose --version
+docker-compose version 1.29.2, build 5becea4c
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 6. Clonamos el repositorio.
+
+
+1. Instalamos git.
+
+sudo apt update
+sudo apt install git -y
+
+git --version
+
+
+2. Clonamos el repositorio.
+
+cd  <-  El comando cd nos posiciona directamente en el directorio casa del usuario.
+
+git clone -b master https://github.com/ricardomariscalquintero/tfmIABD.git
+
+cd tfmIABD
+git branch     # Debería mostrar: * master
+git pull       # Para asegurarte de tener lo último
+ls -la         # Ver contenido
+
+
+3. Configuramos git.
+
+git config --global user.name "Ricardo Mariscal Quintero"
+git config --global user.email "ricardo.mariscal.quintero@iesfernandoaguilar.es"
+
+git config --global --list
+
+
+___________________________________________________________________________________________________________________________________
+
+
+Paso 7. Construimos la infraestructura.
+
+
+1. Construcción, arranque y parada del clúster.
+
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
+sudo docker ps
+sudo docker-compose down
+
+
+2. Limpieza del clúster.
+
+sudo docker-compose down -v
+sudo docker system prune --volumes --all
+
+
+3. Comprobar el estado de recursos en tiempo real.
+
+Comprobar el disco: watch -n 1 "df -h"
+Miramos la partición "/"
+Para salir pulsar Ctrl + c
+
+Comprobar la memoria RAM: watch -n 1 "free -h"
+
+
+4. Acceso a contenedores.
+
+sudo docker exec -it namenode bash   -   Para entrar en otro contenedor cambiaremos namenode por el nombre del que sea.
+
+
+5. Herramientas importantes.
+
+Namenode: http://localhost:9870/
+
+Yarn: http://localhost:8088/
+
+Airflow: http://localhost:8080/login/  -  Usuario: admin / Password: admin
+
+Dremio: http://localhost:9047   -   Para acceder a HDFS le damos a "Add Source" y configuramos Name: HDFS Cluster, NameNodeHost: namenode y Port: 9000
+

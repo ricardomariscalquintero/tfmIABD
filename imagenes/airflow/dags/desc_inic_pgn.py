@@ -21,7 +21,7 @@ with DAG(
     tarea_descargar = PythonOperator(
         task_id='descargar_pgns',
         python_callable=descargar_pgns_local,
-        op_kwargs={'destLocal': '/tmp', 'maxArchivos': 25},
+        op_kwargs={'destLocal': '/tmp', 'maxArchivos': 2},
     )
 
     tarea_convertir = PythonOperator(

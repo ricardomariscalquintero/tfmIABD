@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 from datetime import datetime
 from twic_utils import descargar_pgns_local, convertir_pgns_a_csv, subir_a_hdfs
 
@@ -10,11 +11,11 @@ default_args = {
 }
 
 with DAG(
-    dag_id='desc_inic_pgns',
+    dag_id='desc_inic_pgns_warehouse',
     default_args=default_args,
-    description='Descarga, convierte y sube partidas PGN de TWIC a HDFS',
-    schedule_interval=None,    # no se ejecuta automáticamente
-    catchup=False,             # no hace ejecuciones pasadas
+    description='Descarga, convierte, sube a HDFS y genera el Data Warehouse',
+    schedule_interval=None,
+    catchup=False,
     tags=['twic', 'ajedrez', 'pgn', 'hdfs'],
 ) as dag:
 
@@ -42,5 +43,14 @@ with DAG(
         },
     )
 
-    tarea_descargar >> tarea_convertir >> tarea_subir
+    tarea_generar_warehouse = BashOperator(
+        task_id='generar_datawarehouse',
+        bash_command=(
+            "docker exec spark-client spark-submit --master yarn --deploy-mode client "
+            "/opt/spark/scripts/warehouse.py "
+            "--input hdfs://namenode:9000/user/ajedrez/procesado/partidas.csv"
+        ),
+    )
+    
+    tarea_descargar >> tarea_convertir >> tarea_subir >> tarea_generar_warehouse
 

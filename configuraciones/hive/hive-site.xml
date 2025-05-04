@@ -6810,7 +6810,7 @@
   </property>
   <property>
     <name>hive.query.reexecution.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>Enable query reexecutions</description>
   </property>
   <property>

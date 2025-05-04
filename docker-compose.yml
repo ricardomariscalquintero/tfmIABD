@@ -10,7 +10,8 @@ services:
     environment:
       - HDFS_NAMENODE_USER=root
     ports:
-      - "9870:9870"   # HDFS Web UI
+      - "9870:9870"  # Web UI
+      - "9000:9000"  # RPC para clientes HDFS
     networks:
       - hadoop-net
     volumes:
@@ -53,6 +54,8 @@ services:
     environment:
       - HDFS_DATANODE_USER=root
       - YARN_NODEMANAGER_USER=root
+    ports:
+      - "9864:9864"  # WebHDFS del datanode1 (host → contenedor)
     networks:
       - hadoop-net
     volumes:
@@ -77,6 +80,8 @@ services:
     environment:
       - HDFS_DATANODE_USER=root
       - YARN_NODEMANAGER_USER=root
+    ports:
+      - "9865:9864"  # WebHDFS del datanode2 (host:9865 → contenedor:9864)
     networks:
       - hadoop-net
     volumes:
@@ -164,7 +169,8 @@ services:
       - resourcemanager
       - hive-server
     volumes:
-      - /tmp/shared:/shared        
+      - /tmp/shared:/shared
+      - ./imagenes/spark/scripts:/opt/spark/scripts        
     environment:
       - SPARK_HOME=/opt/spark
       - HADOOP_HOME=/opt/hadoop
@@ -190,6 +196,7 @@ services:
     volumes:
       - ./imagenes/airflow/dags:/opt/airflow/dags
       - ./imagenes/airflow/start-airflow.sh:/opt/airflow/start-airflow.sh
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8080:8080"
     entrypoint: /bin/bash  # << Esto evita que interprete `command:` como airflow
@@ -203,6 +210,7 @@ services:
     ports:
       - "9047:9047"     # Web UI
       - "31010:31010"   # JDBC/ODBC
+      - "32010:32010"   # Arrow Power BI
       - "45678:45678"   # backend
     volumes:
       - dremio_data:/opt/dremio/data
@@ -220,4 +228,5 @@ volumes:
 
 networks:
   hadoop-net:
+#    external: true
 

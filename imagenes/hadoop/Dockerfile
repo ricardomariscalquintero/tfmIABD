@@ -37,3 +37,18 @@ RUN echo "export JAVA_HOME=${JAVA_HOME}" >> /root/.bashrc && \
 COPY configuraciones/hadoop/* $HADOOP_HOME/etc/hadoop/
 
 CMD ["/bin/bash"]
+
+# Instalar Python 3.9 y pip
+RUN apt-get update && \
+    apt-get install -y python3.9 python3.9-distutils curl && \
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.9
+
+# Crear enlaces simbólicos
+RUN ln -s /usr/bin/python3.9 /usr/bin/python && \
+    ln -s /usr/local/bin/pip /usr/bin/pip
+
+# Instalar python-chess
+RUN pip install --no-cache-dir python-chess
+
+# Instalar numpy para usar en UDFs de Spark
+RUN pip install --no-cache-dir numpy

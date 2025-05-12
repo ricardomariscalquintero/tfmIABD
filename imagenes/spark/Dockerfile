@@ -69,6 +69,7 @@ ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 
 # Instalar Python y librerías útiles para PySpark
 RUN apt-get update && apt-get install -y python3 python3-pip
+RUN pip install python-chess
 
 # Descargar Spark
 RUN wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
@@ -88,6 +89,7 @@ COPY configuraciones/spark/* $SPARK_HOME/conf/
 
 ### --- Python y Jupyter ---
 RUN pip3 install --no-cache-dir \
+    numpy \
     pandas \
     pyarrow \
     findspark \
@@ -95,7 +97,11 @@ RUN pip3 install --no-cache-dir \
     notebook \
     matplotlib \
     seaborn \
-    pyspark
+    pyspark \
+    tensorflow==2.13.0 \    
+    tensorflowonspark \ 	
+    scikit-learn \ 			
+    h5py					
 
 # Directorio de notebooks
 RUN mkdir -p /opt/notebooks

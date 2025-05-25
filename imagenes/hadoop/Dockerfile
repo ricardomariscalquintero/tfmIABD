@@ -50,5 +50,5 @@ RUN ln -s /usr/bin/python3.9 /usr/bin/python && \
 # Instalar python-chess
 RUN pip install --no-cache-dir python-chess
 
-# Instalar numpy para usar en UDFs de Spark
-RUN pip install --no-cache-dir numpy
+# Instalar numpy, pandas y pyarrow para usar en UDFs de Spark y procesamiento de datos
+RUN pip install --no-cache-dir numpy pandas pyarrow

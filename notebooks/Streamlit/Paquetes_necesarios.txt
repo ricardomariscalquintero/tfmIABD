@@ -1,0 +1,6 @@
+pip install streamlit
+pip install cairosvg
+apt-get install -y libcairo2 libcairo2-dev
+pip install langchain-experimental
+pip install langchain-groq
+pip install tabulate

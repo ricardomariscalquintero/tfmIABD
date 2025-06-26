@@ -72,7 +72,9 @@ RUN apt-get update && apt-get install -y python3 python3-pip
 RUN pip install python-chess
 
 # Descargar Spark
-RUN wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+#RUN wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
     tar -xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz -C /opt && \
     mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 $SPARK_HOME && \
     rm spark-${SPARK_VERSION}-bin-hadoop3.tgz

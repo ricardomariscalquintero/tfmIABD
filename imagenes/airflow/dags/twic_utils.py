@@ -105,7 +105,7 @@ def obtener_coordenadas(ciudad, codigo_pais_iso3):
             coordenadas_cache[clave] = latlon_nombre
             return latlon_nombre
     except (GeocoderTimedOut, GeocoderServiceError) as e:
-        print(f"⚠️ Error geolocalizando {clave}: {e}")
+        print(f"Error geolocalizando {clave}: {e}")
         time.sleep(2)
         return obtener_coordenadas(ciudad, codigo_pais_iso3)
 
@@ -262,7 +262,7 @@ def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv", incluir_ju
 
                         writer.writerow(fila)
     
-    print(f"✅ CSV generado línea a línea en: {csvPath}")
+    print(f"CSV generado línea a línea en: {csvPath}")
 
 
 def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://namenode:9870", hdfsPathPGN="/user/ajedrez/raw", hdfsPathCSV="/user/ajedrez/procesado"):
@@ -289,20 +289,20 @@ def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://nameno
             continue
 
         try:
-            print(f"📤 Subiendo: {archivo} → {hdfsDestino}")
+            print(f"Subiendo: {archivo} → {hdfsDestino}")
             client.upload(hdfs_path=hdfsDestino, local_path=localPath, overwrite=True)
             archivos_subidos.append(localPath)
         except Exception as e:
-            print(f"❌ Error subiendo {archivo}: {e}")
+            print(f"Error subiendo {archivo}: {e}")
             continue
 
-    print("✅ Subida a HDFS completada.")
+    print("Subida a HDFS completada.")
 
     """# Limpieza de los archivos locales subidos
     for path in archivos_subidos:
         try:
             os.remove(path)
-            print(f"🧹 Eliminado local: {path}")
+            print(f"Eliminado local: {path}")
 
             # Si es un .pgn, también eliminar el .zip asociado
             if path.endswith(".pgn"):
@@ -310,9 +310,9 @@ def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://nameno
                 zip_path = base + ".zip"
                 if os.path.exists(zip_path):
                     os.remove(zip_path)
-                    print(f"🧹 Eliminado ZIP asociado: {zip_path}")
+                    print(f"Eliminado ZIP asociado: {zip_path}")
         except Exception as e:
-            print(f"⚠️ No se pudo eliminar {path} o su ZIP: {e}")"""
+            print(f"No se pudo eliminar {path} o su ZIP: {e}")"""
 
 
 

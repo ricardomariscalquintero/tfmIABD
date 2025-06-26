@@ -172,8 +172,8 @@ services:
     volumes:
       - /tmp/shared:/shared
       - ./imagenes/spark/scripts:/opt/spark/scripts
-      - ./notebooks:/notebooks  			# Carpeta permanente para los cuadernillos Jupyter
-      - /tmp/.X11-unix:/tmp/.X11-unix   	# Para ver la ventana en pygame
+      - ./notebooks:/notebooks                  # Carpeta permanente para los cuadernillos Jupyter
+      - /tmp/.X11-unix:/tmp/.X11-unix           # Para ver la ventana en pygame
         
     environment:
       - SPARK_HOME=/opt/spark
@@ -181,7 +181,7 @@ services:
       - HIVE_HOME=/opt/hive
       - PATH=/opt/spark/bin:/opt/hadoop/bin:/opt/hive/bin:$PATH
       - SPARK_LOG_LEVEL=ERROR
-      - DISPLAY=${DISPLAY}  				# Para ver la ventana en pygame
+      - DISPLAY=${DISPLAY}                      # Para ver la ventana en pygame
     tty: true
 
   airflow:

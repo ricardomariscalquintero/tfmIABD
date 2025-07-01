@@ -1,30 +1,31 @@
+#Importamos las librerías de SparkSQL.
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, to_date, year, month, dayofmonth, date_format, monotonically_increasing_id
 )
 import argparse
 
-# Argumentos
+#Recibimos los argumentos de entrada.
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', required=True)
 args = parser.parse_args()
 
-# SparkSession con Hive habilitado
+#Creamos el SparkSession con Hive habilitado.
 spark = SparkSession.builder \
     .appName("Procesar Partidas Ajedrez desde HDFS") \
     .enableHiveSupport() \
     .getOrCreate()
 
-# Crear base de datos si no existe
+#Creamos la base de datos si no existe.
 spark.sql("CREATE DATABASE IF NOT EXISTS ajedrez")
 spark.catalog.setCurrentDatabase("ajedrez")
 
-# Leer CSV desde HDFS
+#Leemos el CSV desde HDFS.
 df = spark.read.option("header", True).option("inferSchema", True).csv(args.input)
 
-# =======================
-# Dimensión Fecha
-# =======================
+#=======================
+#Dimensión Fecha
+#=======================
 df = df.withColumn("FechaPartida", to_date("Date")) \
        .withColumn("FechaEvento", to_date("EventDate"))
 
@@ -38,9 +39,9 @@ df_fechas = df.select("FechaPartida").union(df.select("FechaEvento")).distinct()
 
 df_fechas.write.mode("overwrite").saveAsTable("dim_fecha")
 
-# =======================
-# Dimensión Jugador
-# =======================
+#=======================
+#Dimensión Jugador
+#=======================
 white = df.select(
     col("White").alias("nombre"),
     col("WhiteElo").alias("elo"),
@@ -64,9 +65,9 @@ dim_jugador = white.union(black).dropDuplicates(["fide_id"]) \
 
 dim_jugador.write.mode("overwrite").saveAsTable("dim_jugador")
 
-# =======================
-# Dimensión Evento
-# =======================
+#=======================
+#Dimensión Evento
+#=======================
 dim_evento = df.select(
     "Event", "Ciudad", "PaisISO3", "Pais", "Latitud", "Longitud", "Site", "MatchType"
 ).dropDuplicates() \
@@ -74,19 +75,19 @@ dim_evento = df.select(
 
 dim_evento.write.mode("overwrite").saveAsTable("dim_evento")
 
-# =======================
-# Dimensión Apertura
-# =======================
+#=======================
+#Dimensión Apertura
+#=======================
 dim_apertura = df.select("ECO", "Opening") \
     .dropDuplicates() \
     .withColumn("id_apertura", monotonically_increasing_id())
 
 dim_apertura.write.mode("overwrite").saveAsTable("dim_apertura")
 
-# =======================
-# Hechos
-# =======================
-hechos = df \
+#=======================
+#Hecho Partida
+#=======================
+hecho_partida = df \
     .join(dim_jugador.select("id_jugador", col("fide_id").alias("WhiteFideId")),
           on="WhiteFideId", how="left") \
     .withColumnRenamed("id_jugador", "id_jugador_blanco") \
@@ -113,7 +114,7 @@ hechos = df \
         "ResultadoBinario", "Ganador", "DiferenciaELO", "Round"
     )
 
-hechos.write.mode("overwrite").saveAsTable("hechos")
+hecho_partida.write.mode("overwrite").saveAsTable("hecho_partida")
 
 spark.stop()
 

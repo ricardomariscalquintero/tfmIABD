@@ -200,6 +200,7 @@ services:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     volumes:
       - ./imagenes/airflow/dags:/opt/airflow/dags
+      - ./imagenes/airflow/partidas:/opt/airflow/partidas
       - ./imagenes/airflow/start-airflow.sh:/opt/airflow/start-airflow.sh
       - /var/run/docker.sock:/var/run/docker.sock
     ports:

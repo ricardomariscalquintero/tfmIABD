@@ -1,4 +1,12 @@
-codigos_iso3_extras = {
+
+"""
+Este script de python sirve de apoyo a la librería pycountry.
+Si al buscar con la librería, no encuentra la correspondencia
+del país, utilizará este diccionario auxiliar para obtener 
+el nombre del país a partir del ISO3.
+"""
+
+codigosIso3Extras = {
     "AFG": "Afghanistan",
     "AGO": "Angola",
     "ALB": "Albania",

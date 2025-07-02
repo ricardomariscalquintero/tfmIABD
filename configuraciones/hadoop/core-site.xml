@@ -27,5 +27,21 @@
 	<name>dfs.permissions</name>
         <value>false</value>
     </property>
+    <property>
+        <name>hadoop.proxyuser.dremio.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.dremio.groups</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hive.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hive.groups</name>
+        <value>*</value>
+    </property>
 </configuration>
 

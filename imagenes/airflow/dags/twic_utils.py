@@ -257,7 +257,7 @@ Para poder realizar el enriquecimiento nos hemos valido de los anteriores
 métodos.
 """
 
-def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv"):
+def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv", borrarDespues=True):
 
     #Definimos los campos del CSV resultante. Mantendremos algunos nombres inglés
     #para respetar la nomenclatura habitual en los archivos PGNs y los atributos
@@ -356,8 +356,25 @@ def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv"):
 
                         #Escribimos la fila en el CSV.
                         writer.writerow(fila)
-    
+
+		#Limpiamos el directorio temporal.
+                if borrarDespues:
+                    try:
+                        os.remove(rutaPgn)
+                        print(f"Archivo PGN eliminado: {rutaPgn}")
+                    except Exception as e:
+                        print(f"Error eliminando PGN {rutaPgn}: {e}")
+
+                    rutaZip = rutaPgn.replace(".pgn", "g.zip")
+		    
+                    try:
+                        os.remove(rutaZip)
+                        print(f"Archivo ZIP eliminado: {rutaZip}")
+                    except Exception as e:
+                        print(f"Error eliminando ZIP {rutaZip}: {e}")
+
     print(f"CSV generado línea a línea en: {csvPath}")
+
 
 """
 Esta función subirá a HDFS todos los archivos PGNs,
@@ -399,6 +416,10 @@ def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://nameno
             print(f"Subiendo: {archivo} → {hdfsDestino}")
             client.upload(hdfs_path = hdfsDestino, local_path = localPath, overwrite = True)
             archivosSubidos.append(localPath)
+            
+            #Como se ha subido correctamente el fichero, procedemos a borrarlo.
+            os.remove(localPath)
+            print(f"Archivo local eliminado: {localPath}")
         except Exception as e:
             print(f"Error subiendo {archivo}: {e}")
             continue

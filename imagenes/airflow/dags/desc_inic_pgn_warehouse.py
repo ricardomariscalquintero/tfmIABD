@@ -22,13 +22,13 @@ with DAG(
     tarea_descargar = PythonOperator(
         task_id         = 'descargar_pgns',
         python_callable = descargar_pgns_local,
-        op_kwargs       = {'destLocal': '/tmp', 'maxArchivos': 2},
+        op_kwargs       = {'destLocal': '/tmp', 'maxArchivos': 5},
     )
 
     tarea_convertir = PythonOperator(
         task_id         = 'convertir_a_csv',
         python_callable = convertir_pgns_a_csv,
-        op_kwargs       = {'dirPGNs': '/tmp', 'csvPath': '/tmp/partidas.csv', 'incluir_jugadas': False},
+        op_kwargs       = {'dirPGNs': '/tmp', 'csvPath': '/tmp/partidas.csv', 'borrarDespues': True},
     )
 
     tarea_subir = PythonOperator(

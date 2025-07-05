@@ -2,7 +2,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, to_date, year, month, dayofmonth, date_format,
-    row_number, trim, coalesce, lit
+    row_number, trim, coalesce, lit, when
 )
 from pyspark.sql.utils import AnalysisException
 from pyspark.sql.window import Window
@@ -77,7 +77,6 @@ else:
 #Creamos dos dataframes con los datos de los jugadores.
 white = df.select(
     col("White").alias("nombre"),
-    col("WhiteElo").alias("elo"),
     col("WhiteTitle").alias("titulo"),
     col("WhiteTituloNombre").alias("titulo_descripcion"),
     col("WhiteGenderTitle").alias("genero_titulo"),
@@ -87,7 +86,6 @@ white = df.select(
 
 black = df.select(
     col("Black").alias("nombre"),
-    col("BlackElo").alias("elo"),
     col("BlackTitle").alias("titulo"),
     col("BlackTituloNombre").alias("titulo_descripcion"),
     col("BlackGenderTitle").alias("genero_titulo"),
@@ -126,8 +124,7 @@ dimEvento = df.na.drop(subset=["Event"]).select(
     "Pais",
     "Latitud",
     "Longitud",
-    "Site",
-    "MatchType"
+    "Site"
 ).dropDuplicates()
 
 windowEvento = Window.orderBy("Event")
@@ -166,11 +163,14 @@ else:
 #=======================
 #Hecho Partida
 #=======================
+#Cargamos las dimensiones.
 dimJugador  = spark.table("dim_jugador")
 dimFecha    = spark.table("dim_fecha")
 dimEvento   = spark.table("dim_evento")
 dimApertura = spark.table("dim_apertura")
 
+#Creamos la tabla de hechos. Para ello, generamos un dataframe con las tuplas de
+#las dimensiones y posteriormente seleccionamos los campos.
 hechoPartida = df \
     .filter(col("WhiteFideId").isNotNull() & col("BlackFideId").isNotNull()) \
     .join(dimJugador.select("id_jugador", col("fide_id").alias("WhiteFideId")),
@@ -187,29 +187,51 @@ hechoPartida = df \
     .withColumnRenamed("id_fecha", "id_fecha_evento") \
     .join(dimEvento, on="Event", how="left") \
     .join(dimApertura, on=["ECO", "Opening"], how="left") \
+    .withColumn("id_ganador", when(col("Ganador") == "White", col("id_jugador_blanco"))
+                             .when(col("Ganador") == "Black", col("id_jugador_negro"))
+                             .otherwise(None)) \
     .select(
         "id_jugador_blanco", "id_jugador_negro",
         "id_fecha_partida", "id_fecha_evento",
         "id_evento", "id_apertura",
-        "ResultadoBinario", "Ganador", "DiferenciaELO", "Round"
+        "ResultadoBinario", "Ganador", "id_ganador",
+        "DiferenciaELO", "Round", "MatchType",
+        col("WhiteElo").cast("int").alias("elo_blanco"),
+        col("BlackElo").cast("int").alias("elo_negro")
     )
 
-windowPartida = Window.orderBy("id_evento", "id_fecha_partida", "Round")
-hechoPartida = hechoPartida.withColumn("id_partida", row_number().over(windowPartida))
+#Eliminamos los registros duplicados.
+hechoPartida = hechoPartida.dropDuplicates([
+    "id_jugador_blanco", "id_jugador_negro", 
+    "id_fecha_partida", "id_evento", "Round", 
+    "ResultadoBinario", "id_apertura"
+])
 
 if modoCarga == "inicial":
+    hechoPartida = hechoPartida.withColumn(
+        "id_partida", row_number().over(Window.orderBy("id_evento", "id_fecha_partida", "Round"))
+    )
     hechoPartida.write.mode("overwrite").saveAsTable("hecho_partida")
 else:
     nuevasPartidas = hechoPartida.alias("n").join(
         spark.table("hecho_partida").alias("e"),
-        on=["id_jugador_blanco", "id_jugador_negro", "id_fecha_partida", "id_evento", "Round"],
+        on=[
+            "id_jugador_blanco", "id_jugador_negro", 
+            "id_fecha_partida", "id_evento", "Round", 
+            "ResultadoBinario", "id_apertura"
+        ],
         how="left_anti"
     )
+
+    nuevasPartidas = nuevasPartidas.withColumn(
+        "id_partida", row_number().over(Window.orderBy("id_evento", "id_fecha_partida", "Round"))
+    )
+
     nuevasPartidas.write.mode("append").saveAsTable("hecho_partida")
 
 #=======================
 #Renombramos el CSV procesado para que no se vuelva a procesar
-# =======================
+#=======================
 rutaOrigen  = argumentosEntrada.input
 timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S")
 rutaDestino = rutaOrigen.replace(".csv", f"_{timestamp}.csv")

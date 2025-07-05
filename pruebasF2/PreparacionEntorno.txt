@@ -1,0 +1,68 @@
+Para exportar las partidas del datawarehouse, lanzamos la consulta en Dremio:
+
+SELECT 
+  p.id_partida,
+
+  jb.nombre AS jugador_blanco,
+  jb.fide_id AS fide_blanco,
+  jb.titulo AS titulo_blanco,
+
+  jn.nombre AS jugador_negro,
+  jn.fide_id AS fide_negro,
+  jn.titulo AS titulo_negro,
+
+  p.elo_blanco,
+  p.elo_negro,
+  p.DiferenciaELO,
+
+  df.fecha AS fecha_partida,
+  ev.Event AS evento,
+  ev.Site AS lugar,
+  ap.ECO,
+  ap.Opening,
+
+  p.ResultadoBinario,
+  p.Ganador,
+  p.id_ganador,
+  jg.nombre AS nombre_ganador,
+  p.Round
+
+FROM HIVEAjedrez.ajedrez.hecho_partida p
+
+JOIN HIVEAjedrez.ajedrez.dim_jugador jb 
+  ON p.id_jugador_blanco = jb.id_jugador
+
+JOIN HIVEAjedrez.ajedrez.dim_jugador jn 
+  ON p.id_jugador_negro = jn.id_jugador
+
+JOIN HIVEAjedrez.ajedrez.dim_fecha df 
+  ON p.id_fecha_partida = df.id_fecha
+
+JOIN HIVEAjedrez.ajedrez.dim_evento ev 
+  ON p.id_evento = ev.id_evento
+
+JOIN HIVEAjedrez.ajedrez.dim_apertura ap 
+  ON p.id_apertura = ap.id_apertura
+
+LEFT JOIN HIVEAjedrez.ajedrez.dim_jugador jg 
+  ON p.id_ganador = jg.id_jugador
+
+ORDER BY df.fecha, ev.Event, p.Round;
+
+
+________________________________________________________________________
+
+Preparación del entorno para ejecutar el script:
+
+#Instalamos el soporte completo para el entorno.
+sudo apt install python3-venv python3-full -y
+
+#Creamos el entorno virtual.
+python3 -m venv vaje
+
+#Activamos el entorno.
+source vaje/bin/activate
+
+#Instalamos las librerías.
+pip install pandas python-chess
+

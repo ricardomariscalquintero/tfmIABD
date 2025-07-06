@@ -52,6 +52,14 @@ def normalizar_valor(valor):
         return "Sin título"
     return str(valor).strip()
 
+#Desarrollamos esta función qué, además de comprobar si son dos campos iguales,
+#nos permite considerar equivalentes None y NaN.
+def iguales(valorPGN, valorDW):
+    if (valorPGN is None or pd.isna(valorPGN)) and (valorDW is None or pd.isna(valorDW)):
+        return True
+        
+    return str(valorPGN).strip() == str(valorDW).strip()
+
 #Iniciamos el procesamiento de los ficheros PGNs
 #Definimos las variables relicionadas con las estadísticas generales.
 errores       = []
@@ -152,7 +160,7 @@ for ficheroPGN in sorted(os.listdir(pgnDir)):
             for campo, valorPGN, valorDW in campos:
             
                 #Si son distintos los valores, registramos la diferencia.
-                if str(valorPGN).strip() != str(valorDW).strip():
+                if not iguales(valorPGN, valorDW):
                     errores.append(
                         f"Diferencia en id_partida = {id_partida} → {campo}: PGN = '{valorPGN}' vs DWH = '{valorDW}'"
                     )

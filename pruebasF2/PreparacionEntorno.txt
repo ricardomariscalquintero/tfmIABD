@@ -5,11 +5,11 @@ SELECT
 
   jb.nombre AS jugador_blanco,
   jb.fide_id AS fide_blanco,
-  jb.titulo AS titulo_blanco,
+  pb.titulo AS titulo_blanco,
 
   jn.nombre AS jugador_negro,
   jn.fide_id AS fide_negro,
-  jn.titulo AS titulo_negro,
+  pn.titulo AS titulo_negro,
 
   p.elo_blanco,
   p.elo_negro,
@@ -29,19 +29,26 @@ SELECT
 
 FROM HIVEAjedrez.ajedrez.hecho_partida p
 
-JOIN HIVEAjedrez.ajedrez.dim_jugador jb 
+-- LEFT JOIN en todas las dimensiones para ver qué falla
+LEFT JOIN HIVEAjedrez.ajedrez.dim_jugador jb 
   ON p.id_jugador_blanco = jb.id_jugador
 
-JOIN HIVEAjedrez.ajedrez.dim_jugador jn 
+LEFT JOIN HIVEAjedrez.ajedrez.dim_jugador jn 
   ON p.id_jugador_negro = jn.id_jugador
 
-JOIN HIVEAjedrez.ajedrez.dim_fecha df 
+LEFT JOIN HIVEAjedrez.ajedrez.dim_perfil pb
+  ON p.id_perfil_blanco = pb.id_perfil
+
+LEFT JOIN HIVEAjedrez.ajedrez.dim_perfil pn
+  ON p.id_perfil_negro = pn.id_perfil
+
+LEFT JOIN HIVEAjedrez.ajedrez.dim_fecha df 
   ON p.id_fecha_partida = df.id_fecha
 
-JOIN HIVEAjedrez.ajedrez.dim_evento ev 
+LEFT JOIN HIVEAjedrez.ajedrez.dim_evento ev 
   ON p.id_evento = ev.id_evento
 
-JOIN HIVEAjedrez.ajedrez.dim_apertura ap 
+LEFT JOIN HIVEAjedrez.ajedrez.dim_apertura ap 
   ON p.id_apertura = ap.id_apertura
 
 LEFT JOIN HIVEAjedrez.ajedrez.dim_jugador jg 

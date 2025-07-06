@@ -22,24 +22,25 @@ with DAG(
     tarea_descargar = PythonOperator(
         task_id         = 'descargar_pgns',
         python_callable = descargar_pgns_local,
-        op_kwargs       = {'destLocal': '/tmp', 'maxArchivos': 5},
+        op_kwargs       = {'destLocal': '/tmp', 'maxArchivos': 10},
     )
 
     tarea_convertir = PythonOperator(
         task_id         = 'convertir_a_csv',
         python_callable = convertir_pgns_a_csv,
-        op_kwargs       = {'dirPGNs': '/tmp', 'csvPath': '/tmp/partidas.csv', 'borrarDespues': True},
+        op_kwargs       = {'dirPGNs': '/tmp', 'csvPath': '/tmp/partidas.csv'},
     )
 
     tarea_subir = PythonOperator(
         task_id         = 'subir_a_hdfs',
         python_callable = subir_a_hdfs,
         op_kwargs       = {
-            'dirLocal': '/tmp',
-            'csvName': 'partidas.csv',
-            'hdfsURL': 'http://namenode:9870',
-            'hdfsPathPGN': '/user/ajedrez/raw',
-            'hdfsPathCSV': '/user/ajedrez/procesado'
+            'dirLocal'     : '/tmp',
+            'csvName'      : 'partidas.csv',
+            'hdfsURL'      : 'http://namenode:9870',
+            'hdfsPathPGN'  : '/user/ajedrez/raw',
+            'hdfsPathCSV'  : '/user/ajedrez/procesado', 
+            'borrarDespues': True
         },
     )
 

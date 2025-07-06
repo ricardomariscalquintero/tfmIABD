@@ -257,7 +257,7 @@ Para poder realizar el enriquecimiento nos hemos valido de los anteriores
 métodos.
 """
 
-def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv", borrarDespues=True):
+def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv"):
 
     #Definimos los campos del CSV resultante. Mantendremos algunos nombres inglés
     #para respetar la nomenclatura habitual en los archivos PGNs y los atributos
@@ -357,22 +357,6 @@ def convertir_pgns_a_csv(dirPGNs="/tmp", csvPath="/tmp/partidas.csv", borrarDesp
                         #Escribimos la fila en el CSV.
                         writer.writerow(fila)
 
-		#Limpiamos el directorio temporal.
-                if borrarDespues:
-                    try:
-                        os.remove(rutaPgn)
-                        print(f"Archivo PGN eliminado: {rutaPgn}")
-                    except Exception as e:
-                        print(f"Error eliminando PGN {rutaPgn}: {e}")
-
-                    rutaZip = rutaPgn.replace(".pgn", "g.zip")
-		    
-                    try:
-                        os.remove(rutaZip)
-                        print(f"Archivo ZIP eliminado: {rutaZip}")
-                    except Exception as e:
-                        print(f"Error eliminando ZIP {rutaZip}: {e}")
-
     print(f"CSV generado línea a línea en: {csvPath}")
 
 
@@ -381,7 +365,7 @@ Esta función subirá a HDFS todos los archivos PGNs,
 además del CSV resultante.
 """
 
-def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://namenode:9870", hdfsPathPGN="/user/ajedrez/raw", hdfsPathCSV="/user/ajedrez/procesado"):
+def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://namenode:9870", hdfsPathPGN="/user/ajedrez/raw", hdfsPathCSV="/user/ajedrez/procesado", borrarDespues=True):
 
     #Iniciamos la conexión con el cliente.
     client = InsecureClient(hdfsURL, user='root')
@@ -417,9 +401,23 @@ def subir_a_hdfs(dirLocal="/tmp", csvName="partidas.csv", hdfsURL="http://nameno
             client.upload(hdfs_path = hdfsDestino, local_path = localPath, overwrite = True)
             archivosSubidos.append(localPath)
             
-            #Como se ha subido correctamente el fichero, procedemos a borrarlo.
-            os.remove(localPath)
-            print(f"Archivo local eliminado: {localPath}")
+            #Si lo indica el usuario, limpiamos el directorio temporal.
+            if borrarDespues:
+                os.remove(localPath)
+                print(f"Archivo local eliminado: {localPath}")
+
+                #Si el archivo es un .pgn, intentamos borrar también su .zip asociado
+                if archivo.endswith(".pgn"):
+                    nombreZip = archivo.replace(".pgn", "g.zip")
+                    rutaZip = os.path.join(dirLocal, nombreZip)
+                    
+                    if os.path.exists(rutaZip):
+                        try:
+                            os.remove(rutaZip)
+                            print(f"Archivo ZIP eliminado: {rutaZip}")
+                        except Exception as e:
+                            print(f"Error eliminando ZIP {rutaZip}: {e}")
+            
         except Exception as e:
             print(f"Error subiendo {archivo}: {e}")
             continue

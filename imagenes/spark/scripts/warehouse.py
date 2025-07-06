@@ -77,19 +77,11 @@ else:
 #Creamos dos dataframes con los datos de los jugadores.
 white = df.select(
     col("White").alias("nombre"),
-    col("WhiteTitle").alias("titulo"),
-    col("WhiteTituloNombre").alias("titulo_descripcion"),
-    col("WhiteGenderTitle").alias("genero_titulo"),
-    col("WhiteHasTitle").alias("tiene_titulo"),
     col("WhiteFideId").alias("fide_id")
 ).filter(col("fide_id").isNotNull())
 
 black = df.select(
     col("Black").alias("nombre"),
-    col("BlackTitle").alias("titulo"),
-    col("BlackTituloNombre").alias("titulo_descripcion"),
-    col("BlackGenderTitle").alias("genero_titulo"),
-    col("BlackHasTitle").alias("tiene_titulo"),
     col("BlackFideId").alias("fide_id")
 ).filter(col("fide_id").isNotNull())
 
@@ -108,6 +100,41 @@ else:
         on="fide_id", how="left_anti"
     ).withColumn("id_jugador", row_number().over(windowJugador))
     nuevosJugadores.write.mode("append").saveAsTable("dim_jugador")
+
+#=======================
+#Dimensión Perfil de jugador
+#=======================
+
+#Creamos los perfiles de los usuarios.
+perfilesWhite = df.select(
+    col("WhiteTitle").alias("titulo"),
+    col("WhiteTituloNombre").alias("titulo_descripcion"),
+    col("WhiteGenderTitle").alias("genero_titulo"),
+    col("WhiteHasTitle").alias("tiene_titulo")
+)
+
+perfilesBlack = df.select(
+    col("BlackTitle").alias("titulo"),
+    col("BlackTituloNombre").alias("titulo_descripcion"),
+    col("BlackGenderTitle").alias("genero_titulo"),
+    col("BlackHasTitle").alias("tiene_titulo")
+)
+
+dimPerfil = perfilesWhite.union(perfilesBlack).dropDuplicates()
+
+windowPerfil = Window.orderBy("titulo", "titulo_descripcion", "genero_titulo", "tiene_titulo")
+
+if modoCarga == "inicial":
+    dimPerfil = dimPerfil.withColumn("id_perfil", row_number().over(windowPerfil))
+    dimPerfil.write.mode("overwrite").saveAsTable("dim_perfil")
+else:
+    nuevosPerfiles = dimPerfil.alias("n").join(
+        spark.table("dim_perfil").alias("e"),
+        on=["titulo", "titulo_descripcion", "genero_titulo", "tiene_titulo"],
+        how="left_anti"
+    ).withColumn("id_perfil", row_number().over(windowPerfil))
+    
+    nuevosPerfiles.write.mode("append").saveAsTable("dim_perfil")
 
 #=======================
 #Dimensión Evento
@@ -165,6 +192,7 @@ else:
 #=======================
 #Cargamos las dimensiones.
 dimJugador  = spark.table("dim_jugador")
+dimPerfil   = spark.table("dim_perfil")
 dimFecha    = spark.table("dim_fecha")
 dimEvento   = spark.table("dim_evento")
 dimApertura = spark.table("dim_apertura")
@@ -187,11 +215,36 @@ hechoPartida = df \
     .withColumnRenamed("id_fecha", "id_fecha_evento") \
     .join(dimEvento, on="Event", how="left") \
     .join(dimApertura, on=["ECO", "Opening"], how="left") \
+    .join(
+        dimPerfil.select(
+            col("id_perfil"),
+            col("titulo").alias("WhiteTitle"),
+            col("titulo_descripcion").alias("WhiteTituloNombre"),
+            col("genero_titulo").alias("WhiteGenderTitle"),
+            col("tiene_titulo").alias("WhiteHasTitle")
+        ),
+        on=["WhiteTitle", "WhiteTituloNombre", "WhiteGenderTitle", "WhiteHasTitle"],
+        how="left"
+    ) \
+    .withColumnRenamed("id_perfil", "id_perfil_blanco") \
+    .join(
+        dimPerfil.select(
+            col("id_perfil"),
+            col("titulo").alias("BlackTitle"),
+            col("titulo_descripcion").alias("BlackTituloNombre"),
+            col("genero_titulo").alias("BlackGenderTitle"),
+            col("tiene_titulo").alias("BlackHasTitle")
+        ),
+        on=["BlackTitle", "BlackTituloNombre", "BlackGenderTitle", "BlackHasTitle"],
+        how="left"
+    ) \
+    .withColumnRenamed("id_perfil", "id_perfil_negro") \
     .withColumn("id_ganador", when(col("Ganador") == "White", col("id_jugador_blanco"))
                              .when(col("Ganador") == "Black", col("id_jugador_negro"))
                              .otherwise(None)) \
     .select(
         "id_jugador_blanco", "id_jugador_negro",
+        "id_perfil_blanco", "id_perfil_negro",
         "id_fecha_partida", "id_fecha_evento",
         "id_evento", "id_apertura",
         "ResultadoBinario", "Ganador", "id_ganador",
@@ -202,7 +255,8 @@ hechoPartida = df \
 
 #Eliminamos los registros duplicados.
 hechoPartida = hechoPartida.dropDuplicates([
-    "id_jugador_blanco", "id_jugador_negro", 
+    "id_jugador_blanco", "id_jugador_negro",
+    "id_perfil_blanco", "id_perfil_negro", 
     "id_fecha_partida", "id_evento", "Round", 
     "ResultadoBinario", "id_apertura"
 ])

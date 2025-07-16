@@ -1,22 +1,29 @@
+# pip install streamlit
+# pip install cairosvg
+# apt-get install -y libcairo2 libcairo2-dev
+# pip install langchain-experimental
+# pip install langchain-groq
+# pip install tabulate
+
+
 import streamlit as st
 from pyspark.sql import SparkSession
 import os
 
 st.set_page_config(page_title="Estudio de Jugadores", layout="wide")
 st.title("Analiza a tu rival")
-
 st.image("ChessSet.jpg", width=300)
 
 
 # Iniciar SparkSession solo una vez
 if 'spark' not in st.session_state:
-   st.session_state.spark = SparkSession.builder.appName("TFM_Analisis_jugadores").getOrCreate()
-#    st.session_state.spark = (
-#        SparkSession.builder
-#        .appName("TFM_Analisis_jugadores")
-#        .master("local[*]")  
-#        .getOrCreate()
-#    )
+#   st.session_state.spark = SparkSession.builder.appName("TFM_Analisis_jugadores").getOrCreate()
+    st.session_state.spark = (
+        SparkSession.builder
+        .appName("TFM_Analisis_jugadores")
+        .master("yarn")  
+        .getOrCreate()
+    )
 
 spark = st.session_state.spark
 
